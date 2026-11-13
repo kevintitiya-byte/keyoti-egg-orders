@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keyoti Poultry: Order Eggs</title>
+<style>
+:root{--w:rgb(255,255,255);--g:rgb(27,122,52);--gd:rgb(18,82,36);--gt:rgb(232,245,236);--y:rgb(255,200,20);--yt:rgb(255,246,214);--t:rgb(30,45,35);--m:rgb(95,110,100);--l:rgb(214,226,218);--r:rgb(190,50,40);color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;background:var(--w);color:var(--t)}
+header{background:var(--g);color:var(--w);padding:14px 16px;border-bottom:5px solid var(--y);display:flex;align-items:center;gap:12px}
+header img{height:44px;border-radius:8px;background:var(--w)}
+header h1{font-size:19px;margin:0}header p{margin:0;font-size:13px}
+nav{display:flex;border-bottom:1px solid var(--l)}
+nav button{flex:1;padding:12px;border:0;background:var(--w);font:inherit;font-weight:600;color:var(--m);border-bottom:3px solid transparent}
+nav button.on{color:var(--gd);border-color:var(--y)}
+main{max-width:560px;margin:0 auto;padding:16px}
+.card{border:1px solid var(--l);border-radius:12px;padding:14px;margin:12px 0}
+.tint{background:var(--gt)}.warn{background:var(--yt);border-color:var(--y)}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:14px}
+input,select{width:100%;padding:11px;border:1px solid var(--l);border-radius:8px;font:inherit;background:var(--w);color:var(--t)}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--y);outline-offset:1px}
+.b{width:100%;margin-top:14px;padding:13px;border:0;border-radius:10px;background:var(--y);color:var(--t);font:inherit;font-weight:700;cursor:pointer}
+.g{background:var(--g);color:var(--w)}
+.s{width:auto;margin:8px 8px 0 0;padding:8px 12px;font-size:14px}
+.big{font-size:24px;font-weight:700;color:var(--gd)}
+.pill{padding:2px 10px;border-radius:99px;background:var(--gt);color:var(--gd);font-size:13px;font-weight:600}
+.err{color:var(--r);font-weight:600}
+h3{margin:18px 0 0;color:var(--gd)}a{color:var(--gd)}
+footer{text-align:center;padding:20px;font-size:13px;color:var(--m)}
+</style></head><body>
+<header><img src="logo.png" alt="" onerror="this.remove()"><div><h1>Keyoti Poultry</h1><p>Fresh eggs, delivered</p></div></header>
+<nav><button class="on" data-t="order">Order</button><button data-t="track">Track order</button><button data-t="owner" id="ownTab" hidden>Owner</button></nav>
+<main>
+<section id="order">
+ <div class="card tint"><div class="big" id="price">Loading…</div><div id="avail"></div></div>
+ <div id="form">
+  <label for="n">Your name</label><input id="n" autocomplete="name">
+  <label for="p">Phone number</label><input id="p" type="tel" autocomplete="tel" placeholder="07…">
+  <label for="l">Delivery location or landmark</label><input id="l">
+  <label for="q">Trays (1 tray = 30 eggs)</label><input id="q" type="number" min="1" max="100" value="1">
+  <label for="d">Delivery day</label><select id="d"></select>
+  <label for="pm">Payment</label><select id="pm"><option value="paybill">Paybill (M-Pesa or Airtel Money)</option><option value="cod">Pay on delivery</option></select>
+  <div id="pb" class="card warn"></div>
+  <div id="mc"><label for="m">Payment confirmation code</label><input id="m" autocapitalize="characters"></div>
+  <div id="note"></div><div id="err" class="err"></div>
+  <button class="b g" id="go">Place order</button>
+ </div>
+ <div id="done" hidden></div>
+</section>
+<section id="track" hidden>
+ <label for="tc">Order code</label><input id="tc" placeholder="KP-XXXXXX" autocapitalize="characters">
+ <label for="tp">Phone number used</label><input id="tp" type="tel">
+ <button class="b g" id="tg">Check status</button><div id="tr" class="card" hidden></div>
+</section>
+<section id="owner" hidden>
+ <div id="login"><label for="oe">Email</label><input id="oe" type="email"><label for="op">Password</label><input id="op" type="password">
+  <button class="b g" id="ol">Sign in</button><div id="oerr" class="err"></div></div>
+ <div id="dash" hidden>
+  <div class="card tint"><b>Settings</b>
+   <label for="fa">Trays available for the next delivery</label><input id="fa" type="number" min="0">
+   <label for="fp">Price per tray (KSh)</label><input id="fp" type="number" min="0">
+   <label for="fb">Paybill number</label><input id="fb">
+   <label for="fw">WhatsApp number (254…)</label><input id="fw">
+   <label for="fd">Delivery days, separated by commas</label><input id="fd">
+   <button class="b" id="sv">Save settings</button></div>
+  <div class="card" id="sum"></div><div id="list"></div>
+  <button class="b s g" id="lo">Sign out</button>
+ </div>
+</section>
+</main>
+<footer>Keyoti Poultry · Kakamega County</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const URL_='https://obsfiggtorpadmaoagyk.supabase.co',KEY='PASTE_YOUR_PUBLISHABLE_KEY_HERE';
+const db=supabase.createClient(URL_,KEY),$=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const kes=n=>'KSh '+Number(n).toLocaleString('en-KE');
+const ST={waitlist:'Waitlist',received:'Received',confirmed:'Confirmed',out:'Out for delivery',delivered:'Delivered',cancelled:'Cancelled'};
+const RES=s=>['received','confirmed','out','delivered'].includes(s);
+let cfg={price:0,trays_available:0,paybill:'',whatsapp:'',delivery_days:''},S={},O=[];
+function tab(t){['order','track','owner'].forEach(x=>$(x).hidden=x!=t);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t))}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+async function cfgLoad(){
+ const{data,error}=await db.rpc('get_config');
+ if(error||!data){$('price').textContent='Could not load';$('avail').textContent='Check your connection and refresh.';return}
+ cfg=data;$('price').textContent=kes(cfg.price)+' per tray of 30 eggs';
+ $('avail').textContent=cfg.trays_available>0?cfg.trays_available+' trays available for the next delivery':'Sold out for the next delivery. New orders join the waitlist.';
+ $('d').innerHTML=cfg.delivery_days.split(',').map(x=>`<option>${esc(x.trim())}</option>`).join('');pay()}
+function pay(){const cod=$('pm').value=='cod',q=+$('q').value||0;$('mc').hidden=cod;
+ $('pb').innerHTML=cod?'Pay the rider on delivery.':`Pay <b>${kes(q*cfg.price)}</b> to Paybill <b>${esc(cfg.paybill)}</b>. Account number: <b>your phone number</b>. Then enter the confirmation code below.`;
+ $('note').innerHTML=q>cfg.trays_available?`<div class="card warn">Only ${cfg.trays_available} trays left, so this order joins the waitlist. Do not pay until we confirm.</div>`:''}
+$('pm').onchange=pay;$('q').oninput=pay;
+$('go').onclick=async()=>{
+ const b=$('go');$('err').textContent='';
+ const a={p_name:$('n').value.trim(),p_phone:$('p').value.trim(),p_location:$('l').value.trim(),p_trays:+$('q').value,p_day:$('d').value,p_pay:$('pm').value,p_mpesa:$('m').value.trim().toUpperCase()};
+ if(a.p_pay=='paybill'&&a.p_trays<=cfg.trays_available&&a.p_mpesa.length<8){$('err').textContent='Enter your payment confirmation code, or choose Pay on delivery.';return}
+ b.disabled=true;const{data,error}=await db.rpc('place_order',a);b.disabled=false;
+ if(error||!data){$('err').textContent='Check your name, phone, location and trays, then try again.';return}
+ const wl=data.status=='waitlist',msg=encodeURIComponent(`Hello Keyoti, order ${data.code}: ${a.p_trays} trays, ${a.p_day}, ${a.p_name}, ${a.p_location}`);
+ $('form').hidden=true;$('done').hidden=false;
+ $('done').innerHTML=`<div class="card tint"><div class="big">${esc(data.code)}</div><p>${wl?'You are on the waitlist. We will contact you when trays are ready. Do not pay yet.':'Order received. We will confirm your payment and delivery.'}</p><p>Total: <b>${kes(data.total)}</b><br>Keep this code and your phone number to track the order.</p><a href="https://wa.me/${esc(cfg.whatsapp)}?text=${msg}"><button class="b g">Send on WhatsApp</button></a></div>`};
+$('tg').onclick=async()=>{const{data}=await db.rpc('track_order',{p_code:$('tc').value,p_phone:$('tp').value}),r=$('tr');r.hidden=false;
+ r.innerHTML=data?`<b>${esc(data.code)}</b> <span class="pill">${ST[data.status]}</span><p>${data.trays} trays, ${kes(data.total)}, ${data.paid?'paid':'not yet paid'}<br>Delivery day: ${esc(data.delivery_day)}</p>`:'<span class="err">No order found. Check the code and phone number.</span>'};
+async function owner(){const{data:{session}}=await db.auth.getSession();$('login').hidden=!!session;$('dash').hidden=!session;if(session)load()}
+$('ol').onclick=async()=>{const{error}=await db.auth.signInWithPassword({email:$('oe').value.trim(),password:$('op').value});$('oerr').textContent=error?'Sign-in failed. Check your email and password.':'';owner()};
+$('lo').onclick=async()=>{await db.auth.signOut();owner()};
+async function load(){
+ const[s,o]=await Promise.all([db.from('settings').select('*').eq('id',1).single(),db.from('orders').select('*').order('delivery_day').order('location')]);
+ if(s.error||o.error){$('sum').textContent='Not authorised, or the SQL setup has not been run.';return}
+ S=s.data;O=o.data;
+ [['fa','trays_available'],['fp','price'],['fb','paybill'],['fw','whatsapp'],['fd','delivery_days']].forEach(([i,k])=>$(i).value=S[k]);
+ const sum=f=>O.filter(f).reduce((a,x)=>a+x.trays,0);
+ $('sum').innerHTML=`Open: <b>${sum(x=>['received','confirmed','out'].includes(x.status))}</b> trays · Waitlist: <b>${sum(x=>x.status=='waitlist')}</b> trays · Unpaid: <b>${kes(O.filter(x=>!x.paid&&!['cancelled','waitlist'].includes(x.status)).reduce((a,x)=>a+x.total,0))}</b>`;
+ let day='';
+ $('list').innerHTML=O.filter(x=>x.status!='cancelled'&&!(x.status=='delivered'&&x.paid)).map(x=>{
+  const h=x.delivery_day!=day?(day=x.delivery_day,`<h3>${esc(day)}</h3>`):'';
+  return h+`<div class="card"><b>${esc(x.code)}</b> · ${esc(x.name)} · <a href="tel:${esc(x.phone)}">${esc(x.phone)}</a><br>${esc(x.location)}<br>${x.trays} trays · ${kes(x.total)} · ${x.pay_method=='cod'?'Pay on delivery':'Paybill '+esc(x.mpesa_code||'')} · ${x.paid?'Paid':'Unpaid'}<br><select data-i="${x.id}">${Object.entries(ST).map(([k,v])=>`<option value="${k}"${k==x.status?' selected':''}>${v}</option>`).join('')}</select><button class="b s" data-p="${x.id}">${x.paid?'Mark unpaid':'Mark paid'}</button></div>`}).join('')||'<p>No open orders.</p>'}
+$('list').onchange=async e=>{const i=e.target.dataset.i;if(!i)return;const x=O.find(o=>o.id==i),ns=e.target.value,d=(RES(x.status)?x.trays:0)-(RES(ns)?x.trays:0);
+ if(S.trays_available+d<0&&!confirm('This takes trays available below zero. Continue?'))return load();
+ await db.from('orders').update({status:ns}).eq('id',x.id);
+ if(d)await db.from('settings').update({trays_available:S.trays_available+d}).eq('id',1);load()};
+$('list').onclick=async e=>{const i=e.target.dataset.p;if(!i)return;const x=O.find(o=>o.id==i);await db.from('orders').update({paid:!x.paid}).eq('id',x.id);load()};
+$('sv').onclick=async()=>{await db.from('settings').update({trays_available:+$('fa').value,price:+$('fp').value,paybill:$('fb').value.trim(),whatsapp:$('fw').value.trim(),delivery_days:$('fd').value.trim()}).eq('id',1);load()};
+cfgLoad();
+if(location.hash=='#owner'){$('ownTab').hidden=false;tab('owner');owner()}
+</script>
+</body></html>
