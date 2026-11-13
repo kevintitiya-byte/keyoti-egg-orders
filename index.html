@@ -85,7 +85,7 @@ async function cfgLoad(){
  $('avail').textContent=cfg.trays_available>0?cfg.trays_available+' trays available for the next delivery':'Sold out for the next delivery. New orders join the waitlist.';
  $('d').innerHTML=cfg.delivery_days.split(',').map(x=>`<option>${esc(x.trim())}</option>`).join('');pay()}
 function pay(){const cod=$('pm').value=='cod',q=+$('q').value||0;$('mc').hidden=cod;
- $('pb').innerHTML=cod?'Pay the rider on delivery.':`Pay <b>${kes(q*cfg.price)}</b> to Paybill <b>${esc(cfg.paybill)}</b>. Account number: <b>your phone number</b>. Then enter the confirmation code below.`;
+ $('pb').innerHTML=cod?'Pay the rider on delivery.':`Pay <b>${kes(q*cfg.price)}</b> to Paybill <b>${esc(cfg.paybill)}</b>. Account number: <b>488921</b>. Then enter the confirmation code below.`;
  $('note').innerHTML=q>cfg.trays_available?`<div class="card warn">Only ${cfg.trays_available} trays left, so this order joins the waitlist. Do not pay until we confirm.</div>`:''}
 $('pm').onchange=pay;$('q').oninput=pay;
 $('go').onclick=async()=>{
